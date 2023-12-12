@@ -4,30 +4,48 @@ import aiohttp
 import time
 import logging
 import openai
+from langchain.chat_models import ChatOpenAI
+from langchain.prompts import (
+    ChatPromptTemplate,
+    SystemMessagePromptTemplate,
+    HumanMessagePromptTemplate
+)
+from langchain.chains import LLMChain
 
 with open("kakaosync_prompt_data.json") as f:
     kakaosync_intro_document = f.read()
 
-SYSTEM_MSG = """당신은 카카오 서비스 제공자입니다. 다음 JSON 문서를 보고 '카카오싱크' 서비스에 대해 안내해야 합니다.
-
-{}
-""".format(kakaosync_intro_document)
-
 logger = logging.getLogger("Callback")
+
+def complete_user_utterance(user_utterance):
+    chat_template = ChatPromptTemplate.from_messages(
+        [
+            SystemMessagePromptTemplate.from_template(
+                template=(
+                    "You are a service provider whose company name is "
+                    "'카카오'.  You provide a service named '카카오싱크'."
+                    "The following JSON document is a service manual for "
+                    "'카카오싱크':\n\n"
+                    "{service_manual_for_kakaosync}\n\n"
+                    "When the user asks you about '카카오싱크', you have to "
+                    "answer the question from the information provided by "
+                    "the service manual."
+                )
+            ),
+            HumanMessagePromptTemplate.from_template("{user_message}")
+        ]
+    )
+    chat = ChatOpenAI(temperature=0.8)
+    chain = LLMChain(llm=chat, prompt=chat_template)
+    return chain.run(
+        service_manual_for_kakaosync=kakaosync_intro_document,
+        user_message=user_utterance
+    )
 
 async def callback_handler(request: ChatbotRequest) -> dict:
 
     # ===================== start =================================
-    response = openai.ChatCompletion.create(
-        model="gpt-3.5-turbo",
-        messages=[
-            {"role": "system", "content": SYSTEM_MSG},
-            {"role": "user", "content": request.userRequest.utterance},
-        ],
-        temperature=0,
-    )
-    # focus
-    output_text = response.choices[0].message.content
+    completion = complete_user_utterance(request.userRequest.utterance)
 
    # 참고링크 통해 payload 구조 확인 가능
     payload = {
@@ -36,7 +54,7 @@ async def callback_handler(request: ChatbotRequest) -> dict:
             "outputs": [
                 {
                     "simpleText": {
-                        "text": output_text
+                        "text": completion
                     }
                 }
             ]
