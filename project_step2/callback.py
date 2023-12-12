@@ -5,7 +5,14 @@ import time
 import logging
 import openai
 
-SYSTEM_MSG = "당신은 카카오 서비스 제공자입니다."
+with open("kakaosync_prompt_data.json") as f:
+    kakaosync_intro_document = f.read()
+
+SYSTEM_MSG = """당신은 카카오 서비스 제공자입니다. 다음 JSON 문서를 보고 '카카오싱크' 서비스에 대해 안내해야 합니다.
+
+{}
+""".format(kakaosync_intro_document)
+
 logger = logging.getLogger("Callback")
 
 async def callback_handler(request: ChatbotRequest) -> dict:
