@@ -1,3 +1,4 @@
+import json
 import openai
 
 class ChatbotSession:
@@ -38,8 +39,15 @@ class ChatbotSession:
         argument_map = {}
         if self.temperature is not None:
             argument_map["temperature"] = self.temperature
-        if self.functions is not None:
-            argument_map["functions"] = self.functions
+        if self.functions:
+            functions_trimmed = []
+            for d in self.functions:
+                d_copy = d.copy()
+                for k in list(d_copy.keys()):
+                    if k.startswith("_"):
+                        d_copy.pop(k)
+                functions_trimmed.append(d_copy)
+            argument_map["functions"] = functions_trimmed
             if self.function_call is not None:
                 argument_map["function_call"] = self.function_call
         response = openai.ChatCompletion.create(
@@ -52,7 +60,16 @@ class ChatbotSession:
                 "role": "assistant",
                 "content": response.choices[0].message.content
             })
-        # TODO: add support for function calls
+        elif response.choices[0].message.function_call:
+            call_info = response.choices[0].message.function_call.to_dict()
+            for d in self.functions:
+                if d["name"] == call_info["name"]:
+                    response = d["_actual_function"](user_dialogue, **json.loads(call_info["arguments"]))
+                    break
+            self.conversations.append({
+                "role": "assistant",
+                "content": response.choices[0].message.content
+            })
         return response
 
 class Chatbot:
@@ -79,7 +96,8 @@ class Chatbot:
             self.system_prompt,
             user_prompt,
             gpt_model,
-            temperature
+            temperature,
+            self.functions
         )
         self.sessions.append(session)
         return session
