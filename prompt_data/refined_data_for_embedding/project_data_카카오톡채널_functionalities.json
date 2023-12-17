@@ -1,0 +1,71 @@
+{
+    "section_title": "지원하는 기능",
+    "section_content": [
+        "각 API 및 기능의 Kakao SDK 지원 여부는 지원 범위에서 확인할 수 있습니다.",
+        [
+            {
+                "functionality": "카카오톡 채널 추가하기",
+                "details": "사용자가 지정된 카카오톡 채널을 친구로 추가할 수 있는 연결 페이지를 제공합니다.",
+                "documentation_urls": {
+                    "JavaScript": "https://developers.kakao.com/docs/latest/ko/kakaotalk-channel/js#add-channel"
+                }
+            },
+            {
+                "functionality": "카카오톡 채널 채팅하기",
+                "details": "사용자가 지정된 카카오톡 채널과의 1:1 채팅방으로 진입할 수 있는 연결 페이지를 제공합니다.",
+                "documentation_urls": {
+                    "JavaScript": "https://developers.kakao.com/docs/latest/ko/kakaotalk-channel/js#add-chat"
+                }
+            },
+            {
+                "functionality": "카카오톡 채널 관계 확인하기",
+                "details": "현재 로그인한 사용자와 앱에 연결된 카카오톡 채널의 친구 관계를 확인합니다.",
+                "documentation_urls": {
+                    "REST API": "https://developers.kakao.com/docs/latest/ko/kakaotalk-channel/rest-api#check-relationship"
+                }
+            },
+            {
+                "functionality": "여러 사용자 카카오톡 채널 관계 확인하기",
+                "details": "앱에 연결된 카카오톡 채널과 여러 사용자의 친구 관계를 확인합니다.",
+                "documentation_urls": {
+                    "REST API": "https://developers.kakao.com/docs/latest/ko/kakaotalk-channel/rest-api#check-multiple-relationship"
+                }
+            },
+            {
+                "functionality": "카카오톡 채널 관계 알림",
+                "details": "사용자가 앱에 연결된 카카오톡 채널을 추가하거나 차단했을 때 서비스 서버에 알려줍니다.",
+                "documentation_urls": {
+                    "callback": "https://developers.kakao.com/docs/latest/ko/kakaotalk-channel/callback#relationship"
+                }
+            },
+            {
+                "functionality": "고객 관리:고객 파일 등록하기",
+                "details": "새로운 고객 파일을 만듭니다.",
+                "documentation_urls": {
+                    "REST API": "https://developers.kakao.com/docs/latest/ko/kakaotalk-channel/rest-api#create-user-file"
+                }
+            },
+            {
+                "functionality": "고객 관리:고객 파일 보기",
+                "details": "카카오톡 채널에 등록된 고객 파일 정보들을 확인합니다.",
+                "documentation_urls": {
+                    "REST API": "https://developers.kakao.com/docs/latest/ko/kakaotalk-channel/rest-api#view-user-file"
+                }
+            },
+            {
+                "functionality": "고객 관리:사용자 추가하기",
+                "details": "고객 파일에 사용자 정보를 추가합니다.",
+                "documentation_urls": {
+                    "REST API": "https://developers.kakao.com/docs/latest/ko/kakaotalk-channel/rest-api#add-user"
+                }
+            },
+            {
+                "functionality": "고객 관리:사용자 삭제하기",
+                "details": "카카오톡 채널에 등록된 고객 파일에서 특정 사용자를 삭제합니다.",
+                "documentation_urls": {
+                    "REST API": "https://developers.kakao.com/docs/latest/ko/kakaotalk-channel/rest-api#delete-user"
+                }
+            }
+        ]
+    ]
+}
