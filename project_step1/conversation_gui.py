@@ -60,7 +60,8 @@ class MessengerSession:
         thinking_popup.destroy()
 
         # 태그를 추가한 부분(1)
-        self.conversation.insert(tk.END, f"gpt assistant: {response}\n", "assistant")
+        response_text = response.choices[0].message.content
+        self.conversation.insert(tk.END, f"gpt assistant: {response_text}\n", "assistant")
         self.conversation.config(state=tk.DISABLED)
         # conversation을 수정하지 못하게 설정하기
         self.conversation.see(tk.END)
