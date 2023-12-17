@@ -11,8 +11,9 @@ def main():
             "export해주세요."
         )
         sys.exit(1)
+
     init_data = {
-        "system_prompt": "You are a helpful assistant."
+        "chatbot": chatbot.Chatbot("You are a helpful assistant.")
     }
     messenger = MessengerSession(init_data)
     messenger.mainloop()

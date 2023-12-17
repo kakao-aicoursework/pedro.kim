@@ -11,7 +11,7 @@ class MessengerSession:
     def __init__(self, init_data=None):
         self.init_data = init_data
         if init_data is not None:
-            self.initialize_messenger(init_data)
+            self.initialize(init_data)
 
     def show_popup_message(self, message):
         popup = tk.Toplevel(self.root)
@@ -65,7 +65,7 @@ class MessengerSession:
         # conversation을 수정하지 못하게 설정하기
         self.conversation.see(tk.END)
 
-    def initialize_gui(self):
+    def _initialize_gui(self):
         self.root = tk.Tk()
         self.root.title(self.MESSENGER_TITLE)
 
@@ -91,13 +91,10 @@ class MessengerSession:
 
         self.root.bind('<Return>', lambda event: self.on_send())
 
-    def initialize_chatbot(self, system_prompt):
-        self.chatbot = chatbot.Chatbot(system_prompt)
+    def initialize(self, init_data=None):
+        self.chatbot = init_data["chatbot"]
         self.current_session = self.chatbot.create_session()
-
-    def initialize_messenger(self, init_data=None):
-        self.initialize_chatbot(init_data["system_prompt"])
-        self.initialize_gui()
+        self._initialize_gui()
 
     def mainloop(self):
         return self.root.mainloop()
