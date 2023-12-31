@@ -1,4 +1,5 @@
 #-*- coding: utf-8 -*-
+import asyncio
 from fastapi import FastAPI
 from fastapi import BackgroundTasks
 from fastapi.responses import HTMLResponse
@@ -10,7 +11,7 @@ import openai
 app = FastAPI()
 
 @app.get("/")
-async def home():
+async def home(background_tasks: BackgroundTasks):
     page = """
     <html>
         <body>
@@ -32,11 +33,14 @@ async def skill(req: ChatbotRequest):
 async def skill(req: ChatbotRequest):
     return commerce_card_sample
 
+async def create_callback_task(*args, **kwargs):
+    await asyncio.create_task(callback_handler(*args, **kwargs))
+
 # callback.py 로 연결
 @app.post("/callback")
 async def skill(req: ChatbotRequest, background_tasks: BackgroundTasks):
     #핸들러 호출 / background_tasks 변경가능
-    background_tasks.add_task(callback_handler, req)
+    background_tasks.add_task(create_callback_task, req)
     out = {
         "version" : "2.0",
         "useCallback" : True,
