@@ -1,5 +1,6 @@
 import json
 import chromadb
+import sqlite3
 from chromadb.config import Settings
 from langchain_core.runnables.base import Runnable
 from langchain_core.output_parsers import StrOutputParser
@@ -9,15 +10,49 @@ from langchain.prompts import (
     SystemMessagePromptTemplate,
     HumanMessagePromptTemplate
 )
+from langchain.memory import ChatMessageHistory
 
 with open("keywords.json") as f:
     service_keywords = json.load(f)
+
+def get_last_conversation(user_id):
+    db = sqlite3.connect("conversation_history.db")
+    cur = db.cursor()
+    result = cur.execute("""
+    CREATE TABLE IF NOT EXISTS
+    chat_history (
+        user_id TEXT NOT NULL PRIMARY KEY,
+        user_message TEXT,
+        ai_message TEXT
+    )
+    """).execute("""
+    SELECT user_id, user_message, ai_message FROM chat_history
+    WHERE user_id = ?
+    """, [user_id]).fetchone()
+    db.close()
+    return result
+
+def store_last_conversation(user_id, user_message, ai_message):
+    db = sqlite3.connect("conversation_history.db")
+    cur = db.cursor()
+    result = cur.execute("""
+    CREATE TABLE IF NOT EXISTS
+    chat_history (
+        user_id TEXT NOT NULL PRIMARY KEY,
+        user_message TEXT,
+        ai_message TEXT
+    )
+    """).execute("""
+    REPLACE INTO chat_history (user_id, user_message, ai_message) VALUES (?, ?, ?)
+    """, [user_id, user_message, ai_message])
+    db.commit()
+    db.close()
 
 class ClassifyMessage(Runnable):
     def generate_chat_template(self):
         chat_template = ChatPromptTemplate.from_messages([
             SystemMessagePromptTemplate.from_template(
-                "You are a helpful assitant who works for a software service"
+                "You are a helpful assitant who works for a software service "
                 "provider named '카카오'.  Your job is to read user messages "
                 "and route these enquiries to other appropriate assistants."
             ),
@@ -58,7 +93,7 @@ class ExtractKeywords(Runnable):
     def generate_chat_template(self):
         chat_template = ChatPromptTemplate.from_messages([
             SystemMessagePromptTemplate.from_template(
-                "You are a helpful assitant who works for a software service"
+                "You are a helpful assitant who works for a software service "
                 "provider named '카카오'.  Your job is to read user messages "
                 "and route these enquiries to other appropriate assistants."
             ),
@@ -89,14 +124,15 @@ class AnswerQuestionsUsingDocuments(Runnable):
         super().__init__(*args, **kwargs)
         self._collection_name = collection_name
 
-    def generate_chat_template(self):
+    def generate_chat_template(self, conversation_history=None):
         chat_template = ChatPromptTemplate.from_messages([
             SystemMessagePromptTemplate.from_template(
-                "You are a helpful assitant who works for a software service"
+                "You are a helpful assitant who works for a software service "
                 "provider named '카카오'.  Your job is to answer user "
                 "inquiries by the information from provided documentation."
-            ),
-            HumanMessagePromptTemplate.from_template(
+            )]
+            + ([] if conversation_history is None else conversation_history.messages)
+            + [HumanMessagePromptTemplate.from_template(
                 "The user inquiry was the following:\n"
                 "\n"
                 "User inquiry: {user_message}\n"
@@ -125,23 +161,32 @@ class AnswerQuestionsUsingDocuments(Runnable):
         documentation = results["documents"][0][0]
         input_copy = input.copy()
         input_copy["documentation_to_refer_to"] = documentation
+        last_conversation = get_last_conversation(input["user_id"])
+        conversation_history = None
+        if last_conversation is not None:
+            conversation_history = ChatMessageHistory()
+            conversation_history.add_user_message(last_conversation[1])
+            conversation_history.add_ai_message(last_conversation[2])
         chain = (
-            self.generate_chat_template()
+            self.generate_chat_template(conversation_history)
             | ChatOpenAI(temperature=0.8)
             | StrOutputParser()
         )
-        return chain.invoke(input_copy, config)
+        result = chain.invoke(input_copy, config)
+        store_last_conversation(input["user_id"], input["user_message"], result)
+        return result
 
 class ReplyGenericMessage(Runnable):
-    def generate_chat_template(self):
+    def generate_chat_template(self, conversation_history=None):
         chat_template = ChatPromptTemplate.from_messages([
             SystemMessagePromptTemplate.from_template(
-                "You are a helpful assitant who works for a software service"
+                "You are a helpful assitant who works for a software service "
                 "provider named '카카오'.  Your job is to reply to user "
                 "inquiries that were failed to be sent to correct service "
                 "assistants."
-            ),
-            HumanMessagePromptTemplate.from_template(
+            )]
+            + ([] if conversation_history is None else conversation_history.messages)
+            + [HumanMessagePromptTemplate.from_template(
                 "The following is a YAML dictionary whose keys are the names "
                 "of services, and values are keywords that represent the "
                 "services:\n"
@@ -164,10 +209,18 @@ class ReplyGenericMessage(Runnable):
         return chat_template
 
     def invoke(self, input, config=None):
+        last_conversation = get_last_conversation(input["user_id"])
+        conversation_history = None
+        if last_conversation is not None:
+            conversation_history = ChatMessageHistory()
+            conversation_history.add_user_message(last_conversation[1])
+            conversation_history.add_ai_message(last_conversation[2])
         chain = (
-            self.generate_chat_template()
+            self.generate_chat_template(conversation_history)
             | ChatOpenAI(temperature=0.8)
             | StrOutputParser()
         )
-        return chain.invoke(input, config)
+        result = chain.invoke(input, config)
+        store_last_conversation(input["user_id"], input["user_message"], result)
+        return result
 

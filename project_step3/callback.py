@@ -23,10 +23,10 @@ logger = logging.getLogger("Callback")
 with open("kakaosync_prompt_data.json") as f:
     kakaosync_documentation = f.read()
 
-def complete_user_utterance(user_utterance):
-    #from langchain_core.globals import set_debug, set_verbose
-    #set_debug(True)
-    #set_verbose(True)
+def complete_user_utterance(user_utterance, user_id):
+    from langchain_core.globals import set_debug, set_verbose
+    set_debug(True)
+    set_verbose(True)
     chain = (
         ClassifyMessage()
         | RunnableBranch(
@@ -42,12 +42,15 @@ def complete_user_utterance(user_utterance):
             ReplyGenericMessage()
         )
     )
-    return chain.invoke({ "user_message": user_utterance })
+    return chain.invoke({ "user_message": user_utterance, "user_id": user_id })
 
 async def callback_handler(request: ChatbotRequest) -> dict:
 
     # ===================== start =================================
-    completion = complete_user_utterance(request.userRequest.utterance)
+    completion = complete_user_utterance(
+        request.userRequest.utterance,
+        request.userRequest.user.id
+    )
 
     # 참고링크 통해 payload 구조 확인 가능
     payload = {
