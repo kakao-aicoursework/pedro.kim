@@ -1,39 +1,46 @@
-from dto import ChatbotRequest
-from samples import list_card
-import aiohttp
 import time
 import logging
-import openai
-from langchain.chat_models import ChatOpenAI
-from langchain.prompts import (
-    ChatPromptTemplate,
-    SystemMessagePromptTemplate,
-    HumanMessagePromptTemplate
-)
-from langchain.chains import LLMChain
-from langchain.schema import BaseOutputParser
 
-with open("kakaosync_prompt_data.json") as f:
-    kakaosync_intro_document = f.read()
+import aiohttp
+from langchain_core.runnables import (
+    RunnableParallel,
+    RunnablePassthrough,
+    RunnableLambda,
+    RunnableBranch
+)
+
+from dto import ChatbotRequest
+from samples import list_card
+from tasks import (
+    ClassifyMessage,
+    AnswerQuestion,
+    ReplyGenericMessage,
+    ExplainWhyItCantBeAnswered
+)
 
 logger = logging.getLogger("Callback")
 
-class StringOutputParser(BaseOutputParser):
-    def parse(self, text: str):
-        return text
+with open("kakaosync_prompt_data.json") as f:
+    kakaosync_documentation = f.read()
 
 def complete_user_utterance(user_utterance):
-    chat_template = ChatPromptTemplate.from_messages([
-        SystemMessagePromptTemplate.from_template(
-            "You are a helpful assitant who works for a software service"
-            "provider named '카카오'.  Your job is to answer questions about "
-            "a service named '카카오싱크'.  Your answer must be in Korean."
-        ),
-        HumanMessagePromptTemplate.from_template("{user_message}")
-    ])
-    chain = chat_template | ChatOpenAI(temperature=0.8) | StringOutputParser()
+    chain = (
+        RunnableParallel(
+            message_type=ClassifyMessage(),
+            original_input=RunnablePassthrough()
+        )
+        | RunnableLambda(lambda d: {
+            "message_type": d["message_type"],
+            **d["original_input"]
+        })
+        | RunnableBranch(
+            (lambda x: "question" in x["message_type"].lower(), AnswerQuestion()),
+            (lambda x: "generic" in x["message_type"].lower(), ReplyGenericMessage()),
+            ExplainWhyItCantBeAnswered()
+        )
+    )
     return chain.invoke({
-        "service_manual_for_kakaosync": kakaosync_intro_document,
+        "kakaosync_documentation": kakaosync_documentation,
         "user_message": user_utterance
     })
 
