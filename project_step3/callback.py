@@ -24,9 +24,9 @@ with open("kakaosync_prompt_data.json") as f:
     kakaosync_documentation = f.read()
 
 def complete_user_utterance(user_utterance):
-    from langchain_core.globals import set_debug, set_verbose
-    set_debug(True)
-    set_verbose(True)
+    #from langchain_core.globals import set_debug, set_verbose
+    #set_debug(True)
+    #set_verbose(True)
     chain = (
         ClassifyMessage()
         | RunnableBranch(
