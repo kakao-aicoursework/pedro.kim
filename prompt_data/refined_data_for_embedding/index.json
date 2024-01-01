@@ -5,5 +5,18 @@
         "project_data_카카오톡채널_functionalities.json",
         "project_data_카카오톡채널_introduction.json",
         "project_data_카카오톡채널_making_better_use.json"
+    ],
+    "project_data_카카오싱크.json": [
+        "project_data_카카오싱크_configuration_guide.json",
+        "project_data_카카오싱크_introduction.json",
+        "project_data_카카오싱크_service_flow_example.json",
+        "project_data_카카오싱크_service_integration_guide.json"
+    ],
+    "project_data_카카오소셜.json": [
+        "project_data_카카오소셜_introduction.json",
+        "project_data_카카오소셜_kakaotalk_friend_info.json",
+        "project_data_카카오소셜_kakaotalk_profile.json",
+        "project_data_카카오소셜_peeker.json",
+        "project_data_카카오소셜_usage_policy.json"
     ]
 }
